@@ -1,5 +1,7 @@
 # gh-sync-prs
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/dbf276f7-df59-4a00-a8a6-a63aaaf15e82" />
+
 A [GitHub CLI](https://cli.github.com/) extension that syncs your open pull
 request branches with **both** their remote branch and a base branch — and is
 aware of [Git worktrees](https://git-scm.com/docs/git-worktree).
