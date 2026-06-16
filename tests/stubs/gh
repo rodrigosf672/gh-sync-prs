@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# Test stub for `gh`. It implements just enough of the real CLI for the
+# behavioral tests: `gh pr list ... --jq <expr>`.
+#
+# Rather than returning pre-filtered output, it applies the *real* --jq
+# expression that gh-sync-prs passes in to a fixture file. That means the
+# selection logic actually under test is the query string from the script
+# itself, not a copy. (The script uses gh's built-in gojq; jq agrees with it
+# for these queries.)
+#
+# The fixture is chosen via $GH_STUB_PRLIST_FIXTURE.
+
+set -euo pipefail
+
+if [[ "${1:-}" == "pr" && "${2:-}" == "list" ]]; then
+  shift 2
+  jq_expr=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --jq)
+        jq_expr="${2:-}"
+        shift 2
+        ;;
+      *)
+        shift
+        ;;
+    esac
+  done
+
+  : "${GH_STUB_PRLIST_FIXTURE:?GH_STUB_PRLIST_FIXTURE must point at a fixture}"
+
+  if [[ -n "$jq_expr" ]]; then
+    jq -r "$jq_expr" "$GH_STUB_PRLIST_FIXTURE"
+  else
+    cat "$GH_STUB_PRLIST_FIXTURE"
+  fi
+  exit 0
+fi
+
+# Any other invocation (e.g. presence checks) succeeds quietly.
+exit 0

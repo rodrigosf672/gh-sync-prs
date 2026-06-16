@@ -1,0 +1,38 @@
+[
+  {
+    "number": 101,
+    "title": "green PR",
+    "headRefName": "feature/green",
+    "statusCheckRollup": [{ "conclusion": "SUCCESS" }]
+  },
+  {
+    "number": 102,
+    "title": "red PR",
+    "headRefName": "feature/red",
+    "statusCheckRollup": [{ "conclusion": "FAILURE" }]
+  },
+  {
+    "number": 103,
+    "title": "pending PR",
+    "headRefName": "feature/pending",
+    "statusCheckRollup": [{ "conclusion": "" }]
+  },
+  {
+    "number": 104,
+    "title": "red plus pending PR",
+    "headRefName": "feature/red-pending",
+    "statusCheckRollup": [{ "conclusion": "FAILURE" }, { "conclusion": "" }]
+  },
+  {
+    "number": 105,
+    "title": "no checks PR",
+    "headRefName": "feature/no-checks",
+    "statusCheckRollup": []
+  },
+  {
+    "number": 106,
+    "title": "pending status context PR",
+    "headRefName": "feature/status-pending",
+    "statusCheckRollup": [{ "state": "PENDING" }]
+  }
+]
