@@ -15,10 +15,22 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
       - name: Run shellcheck
-        run: shellcheck gh-sync-prs
+        run: shellcheck gh-sync-prs tests/stubs/gh
 
       - name: Verify executable
         run: test -x gh-sync-prs
 
       - name: Verify help command
         run: ./gh-sync-prs --help
+
+  bats:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install bats and jq
+        run: sudo apt-get update && sudo apt-get install -y bats jq
+
+      - name: Run bats tests
+        run: bats tests/
