@@ -24,68 +24,28 @@ a fast way to bring red PRs back in line with the base branch.
 
 ## How it works
 
-```mermaid
-flowchart TD
-    A(["gh sync-prs"]) --> B{"git + gh installed?<br/>inside a git repo?"}
-    B -->|no| X["print error<br/>exit 1"]
-    B -->|yes| C["git fetch origin"]
-    C --> D["list your open PRs"]
-    D --> E{"mode"}
-    E -->|"--failed (default)"| F["keep PRs with a<br/>failing CI check"]
-    E -->|"--all"| G["keep every open PR"]
-    F --> H{"for each<br/>selected PR"}
-    G --> H
-    H --> I{"matching<br/>git worktree?"}
-    I -->|yes| J["work in that worktree"]
-    I -->|no| K["work in the current repo"]
-    J --> L{"--dry-run?"}
-    K --> L
-    L -->|yes| M["print the plan<br/>nothing changes"]
-    L -->|no| N["checkout branch<br/>merge origin/&lt;branch&gt;<br/>merge origin/&lt;base&gt;<br/>git push"]
-    N --> O{"merge<br/>conflict?"}
-    O -->|no| P["pushed → Updated"]
-    O -->|yes| Q["reported, then skipped →<br/>resolve by hand and re-run"]
-    M --> H
-    P --> H
-    Q --> H
-    H -->|all done| S(["summary:<br/>Updated · Failed · Skipped"])
+In a nutshell: for each of your open PRs, it merges `main` into the branch and
+pushes — so stale, red PRs go green again.
+
+```text
+For each of your open PRs:
+
+  1. pick the PRs
+       ├─ with failing CI   ← default
+       └─ or all of them    ← --all
+              │
+              ▼   (in the branch's own worktree, if it has one)
+  2. bring the branch up to date
+       ├─ merge  origin/<branch>   (the PR's own latest)
+       ├─ merge  origin/main       (the base branch)
+       └─ git push
+              │
+              ▼
+  3. CI runs again on the now up-to-date branch ✓
 ```
 
-The options, features, and scenarios at a glance:
-
-```mermaid
-graph LR
-    ROOT(["gh sync-prs"])
-    ROOT --> OPT(["Options"])
-    ROOT --> SCN(["Scenarios"])
-    ROOT --> FEA(["Features"])
-    ROOT --> REQ(["Requirements"])
-
-    OPT --> O1["--author &lt;name&gt;, default @me"]
-    OPT --> O2["--failed, default"]
-    OPT --> O3["--all"]
-    OPT --> O4["--base &lt;branch&gt;, default main"]
-    OPT --> O5["--dry-run"]
-    OPT --> O6["-h / --help"]
-
-    SCN --> S1["failing PRs only — default"]
-    SCN --> S2["every open PR — --all"]
-    SCN --> S3["branch lives in a worktree"]
-    SCN --> S4["no worktree → current repo"]
-    SCN --> S5["clean merge → pushed"]
-    SCN --> S6["merge conflict → fix by hand"]
-    SCN --> S7["preview only — --dry-run"]
-
-    FEA --> F1["worktree-aware"]
-    FEA --> F2["merge, not rebase"]
-    FEA --> F3["CI-aware filtering"]
-    FEA --> F4["keeps going after a failure"]
-    FEA --> F5["dry-run preview"]
-
-    REQ --> R1["git"]
-    REQ --> R2["gh, authenticated"]
-    REQ --> R3["run inside a git repo"]
-```
+Try it safely with `--dry-run` first. If a branch hits a merge conflict, it is
+left for you to resolve by hand and the tool moves on to the next PR.
 
 ## Installation
 
