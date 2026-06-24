@@ -128,6 +128,12 @@ while IFS='|' read -r pr_number branch title; do
     repo_path="$worktree_path"
     echo "Worktree: $repo_path"
   else
+    active_branch="$(git branch --show-current)"
+    if [[ "$active_branch" != "$branch" ]]; then
+      echo "No worktree found for '$branch' (on '$active_branch'); skipping."
+      SKIPPED=$((SKIPPED + 1))
+      continue
+    fi
     repo_path="$(pwd)"
     echo "No worktree found; using current repo."
   fi

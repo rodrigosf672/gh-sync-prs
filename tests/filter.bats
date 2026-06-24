@@ -87,5 +87,20 @@ setup() {
   run "$SCRIPT" --base develop --dry-run
   [ "$status" -eq 0 ]
   [[ "$output" == *"Base: origin/develop"* ]]
-  [[ "$output" == *"git merge origin/develop"* ]]
+}
+
+@test "skips PRs without a worktree when not already on that branch" {
+  cd "$REPO"
+  run "$SCRIPT" --all
+  [ "$status" -eq 0 ]
+  [ "$(git -C "$REPO" branch --show-current)" = "main" ]
+  [[ "$output" == *"skipping"* ]]
+  [[ "$output" == *"Skipped: 6"* ]]
+}
+
+@test "does not switch the active branch when no worktree exists" {
+  cd "$REPO"
+  run "$SCRIPT" --all
+  [ "$status" -eq 0 ]
+  [ "$(git -C "$REPO" branch --show-current)" = "main" ]
 }
