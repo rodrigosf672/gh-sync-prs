@@ -167,6 +167,7 @@ Run the command from inside a Git repository.
 
 - Uses merge commits rather than rebasing.
 - Pull requests with merge conflicts are skipped so the remaining pull requests can continue processing.
+- Pull requests without a corresponding worktree are skipped, unless the repository is already checked out on that branch.
 - Use `--dry-run` to preview changes before modifying branches.
 
 ---
