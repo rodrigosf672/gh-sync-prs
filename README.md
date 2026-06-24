@@ -1,121 +1,176 @@
 # gh-sync-prs
 
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/dbf276f7-df59-4a00-a8a6-a63aaaf15e82" />
+<p align="center">
+  <img width="1536" alt="gh-sync-prs" src="https://github.com/user-attachments/assets/dbf276f7-df59-4a00-a8a6-a63aaaf15e82">
+</p>
 
-A [GitHub CLI](https://cli.github.com/) extension that syncs your open pull
-request branches with **both** their remote branch and a base branch — and is
-aware of [Git worktrees](https://git-scm.com/docs/git-worktree).
+A GitHub CLI extension that keeps your open pull requests up to date by automatically merging the latest changes from both the remote branch and the base branch, then pushing the result so CI can run again.
 
-It is designed for the common case where `main` has moved on, your PR's CI has
-gone red, and you just want to merge the latest changes in and re-trigger the
-checks — across one or many PRs, without hunting down each branch by hand.
+It is aware of Git worktrees, so each pull request is updated in its corresponding worktree whenever possible.
 
-## What it does
+## Why?
 
-`gh sync-prs` is a GitHub CLI extension. Once installed it runs as
-`gh sync-prs`. For each of your open pull requests it:
+If you regularly work across multiple pull requests, you've probably experienced this workflow:
 
-1. Finds the matching Git **worktree**, if one exists (otherwise it uses the
-   current repository).
-2. Merges the latest `origin/<branch>` into the local branch.
-3. Merges `origin/main` (or another base branch) into the local branch.
-4. Pushes the result back up.
+- A pull request is merged and `main` moves on.
+- One or more of your pull requests become stale or their CI starts failing.
+- You switch branches (or worktrees).
+- Pull.
+- Merge `main`.
+- Push.
+- Wait for CI.
+- Repeat.
 
-By default it only touches PRs whose CI is currently **failing**, which makes it
-a fast way to bring red PRs back in line with the base branch.
+The individual steps are simple, but they interrupt your flow.
 
-## How it works
-
-In a nutshell: for each of your open PRs, it merges `main` into the branch and
-pushes — so stale, red PRs go green again.
-
-```text
-For each of your open PRs:
-
-  1. pick the PRs
-       ├─ with failing CI   ← default
-       └─ or all of them    ← --all
-              │
-              ▼   (in the branch's own worktree, if it has one)
-  2. bring the branch up to date
-       ├─ merge  origin/<branch>   (the PR's own latest)
-       ├─ merge  origin/main       (the base branch)
-       └─ git push
-              │
-              ▼
-  3. CI runs again on the now up-to-date branch ✓
-```
-
-Try it safely with `--dry-run` first. If a branch hits a merge conflict, it is
-left for you to resolve by hand and the tool moves on to the next PR.
-
-## Installation
-
-This is a GitHub CLI extension, so you install it through `gh`:
+Instead, install the extension once:
 
 ```bash
 gh extension install rodrigosf672/gh-sync-prs
 ```
 
-Upgrade it later with:
+Then keeping your pull requests up to date is as simple as:
+
+```bash
+gh sync-prs
+```
+
+By default, only pull requests with failing CI are updated.
+
+---
+
+## Features
+
+- Updates multiple pull requests with a single command.
+- Git worktree aware.
+- Syncs only pull requests with failing CI by default.
+- Merges both the latest remote branch and the latest base branch.
+- Pushes updated branches automatically.
+- Supports `--dry-run`.
+- Supports custom base branches.
+
+---
+
+## How it works
+
+For each selected pull request, `gh-sync-prs`:
+
+1. Finds the corresponding Git worktree, if one exists.
+2. Merges the latest `origin/<branch>`.
+3. Merges the latest base branch (`origin/main` by default).
+4. Pushes the updated branch.
+
+GitHub Actions (or your CI) then runs against the updated branch.
+
+```text
+For each selected pull request
+
+        │
+        ▼
+Find matching worktree
+        │
+        ▼
+Merge origin/<branch>
+        │
+        ▼
+Merge origin/main
+        │
+        ▼
+Push
+        │
+        ▼
+CI runs again
+```
+
+If a merge conflict occurs, that pull request is skipped and the tool continues with the remaining pull requests.
+
+---
+
+## Installation
+
+```bash
+gh extension install rodrigosf672/gh-sync-prs
+```
+
+Upgrade later with:
 
 ```bash
 gh extension upgrade sync-prs
 ```
 
+---
+
 ## Usage
 
 ```bash
+# Update pull requests with failing CI (default)
 gh sync-prs
+
+# Preview what would happen
 gh sync-prs --dry-run
+
+# Update all open pull requests
 gh sync-prs --all
-gh sync-prs --author rodrigosf672
-gh sync-prs --base main
+
+# Update another author's pull requests
+gh sync-prs --author octocat
+
+# Merge a different base branch
+gh sync-prs --base develop
 ```
 
-### Options
+---
 
-| Option              | Description                                            | Default |
-| ------------------- | ------------------------------------------------------ | ------- |
-| `--author <author>` | PR author to filter by.                                | `@me`   |
-| `--all`             | Sync all open PRs from the author.                     | —       |
-| `--failed`          | Sync only open PRs with failing CI.                    | default |
-| `--base <branch>`   | Base branch to merge into each PR branch.              | `main`  |
-| `--dry-run`         | Show what would be updated, without changing anything. | off     |
-| `-h`, `--help`      | Show help.                                             | —       |
+## Options
+
+| Option | Description | Default |
+|---------|-------------|---------|
+| `--author <author>` | Filter pull requests by author. | `@me` |
+| `--all` | Sync all open pull requests from the author. | — |
+| `--failed` | Sync only pull requests with failing CI. | Default |
+| `--base <branch>` | Base branch to merge into each pull request branch. | `main` |
+| `--dry-run` | Preview changes without modifying branches. | Off |
+| `-h`, `--help` | Show help. | — |
+
+---
 
 ## Default behavior
 
-When run with no arguments, `gh sync-prs`:
+Running
 
-- Finds open PRs authored by `@me`.
-- Filters them down to PRs with **failing CI**.
-- Finds the matching Git worktree, if one exists.
-- Merges `origin/<branch>`.
-- Merges `origin/main`.
-- Pushes.
+```bash
+gh sync-prs
+```
 
-Use `--all` to sync every open PR from the author instead of only the failing
-ones, and `--base <branch>` to merge a base branch other than `main`.
+will:
+
+- Find your open pull requests.
+- Select only those with failing CI.
+- Locate the corresponding Git worktree, when available.
+- Merge the latest `origin/<branch>`.
+- Merge the latest base branch.
+- Push the updated branch.
+
+---
 
 ## Requirements
 
-- [`git`](https://git-scm.com/)
-- [`gh`](https://cli.github.com/) (the GitHub CLI)
-- An authenticated GitHub CLI — run `gh auth login` first.
+- Git
+- GitHub CLI (`gh`)
+- An authenticated GitHub CLI (`gh auth login`)
 
-You must run the command from inside a Git repository.
+Run the command from inside a Git repository.
 
-## Warning
+---
 
-- This uses **merge commits**, not rebase. Your PR branches will gain merge
-  commits from both `origin/<branch>` and the base branch.
-- If a branch hits a **merge conflict**, `gh sync-prs` stops working on that PR,
-  reports the path where you can resolve it manually, and continues on to the
-  next PR.
-- Run with `--dry-run` first to see exactly what would happen before any
-  branches are changed or pushed.
+## Things to know
+
+- Uses merge commits rather than rebasing.
+- Pull requests with merge conflicts are skipped so the remaining pull requests can continue processing.
+- Use `--dry-run` to preview changes before modifying branches.
+
+---
 
 ## License
 
-[MIT](LICENSE) © Rodrigo Silva Ferreira
+MIT © Rodrigo Silva Ferreira
