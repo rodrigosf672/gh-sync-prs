@@ -150,24 +150,18 @@ while IFS='|' read -r pr_number branch title; do
     continue
   fi
 
+  # The steps are chained with && rather than relying on `set -e`: a subshell
+  # used as an `if` condition runs with `set -e` disabled, so a failing merge
+  # would otherwise fall through to `git push` and be reported as success. The
+  # && chain makes the subshell's exit status reflect the first failing step,
+  # so a merge conflict is correctly counted as a failure and skipped.
   if (
-    cd "$repo_path"
-
-    git fetch origin
-
-    current_branch="$(git branch --show-current)"
-    if [[ "$current_branch" != "$branch" ]]; then
-      git checkout "$branch"
-    fi
-
-    echo "Merging latest remote PR branch..."
-    git merge "origin/$branch"
-
-    echo "Merging origin/$BASE_BRANCH..."
-    git merge "origin/$BASE_BRANCH"
-
-    echo "Pushing..."
-    git push
+    cd "$repo_path" &&
+      git fetch origin &&
+      { [[ "$(git branch --show-current)" == "$branch" ]] || git checkout "$branch"; } &&
+      { echo "Merging latest remote PR branch..." && git merge "origin/$branch"; } &&
+      { echo "Merging origin/$BASE_BRANCH..." && git merge "origin/$BASE_BRANCH"; } &&
+      { echo "Pushing..." && git push; }
   ); then
     UPDATED=$((UPDATED + 1))
   else
