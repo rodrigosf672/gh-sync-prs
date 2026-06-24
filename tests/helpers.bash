@@ -33,7 +33,10 @@ setup_repo() {
   SEED="$BATS_TEST_TMPDIR/seed"
   REPO="$BATS_TEST_TMPDIR/work"
 
-  git init -q --bare "$ORIGIN"
+  # -b main so the bare repo's HEAD points at main; otherwise a host whose
+  # init.defaultBranch is master leaves origin/HEAD dangling and the clone of
+  # REPO below cannot check out a local main.
+  git init -q --bare -b main "$ORIGIN"
 
   git init -q -b main "$SEED"
   git -C "$SEED" remote add origin "$ORIGIN"
